@@ -13,3 +13,5 @@
   
   `-s`    enable silent mode
 
+
+###`docker run -it --rm -v ${HOME}/.ssh:/root/.ssh -e GIT_URL='repository-url' -e GIT_EMAIL='customer-email' -e GIT_NAME='customer-name' kupolua/site-builder`
