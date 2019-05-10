@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
-	"log"
 	"os"
 
 	"github.com/nfnt/resize"
@@ -19,7 +18,6 @@ func Thumbnail(src string, dest string) (err error) {
 		return err
 	}
 	if exist {
-		log.Printf("thumbnail already exist %v", dest)
 		return nil
 	}
 

@@ -14,10 +14,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var currentFolder string
-var version = "2019-05-09-A"
+var version = "2019-05-10-L"
 var isSilent bool
 
 var baseTmpl = new(baseTemplate)
@@ -105,6 +106,32 @@ func isProject(page string) bool {
 }
 
 func prepareTemplates() {
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		prepareLayouts()
+		buildProjectsTmpl()
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		resizePortfolio()
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		resizeProjects()
+		wg.Done()
+	}()
+
+	wg.Wait()
+	logIt("web site prepared.")
+}
+
+func prepareLayouts() {
 	layouts, err := files.ReadFiles(filepath.Join(currentFolder, "templates", "layout"))
 	if err != nil {
 		panic(err)
@@ -130,16 +157,10 @@ func prepareTemplates() {
 		logItf("layout %v parsed", l)
 	}
 
-	buildProjectsTmpl()
-
 	baseTmpl.templates, err = files.ReadFiles(filepath.Join(currentFolder, "templates", "content"))
 	if err != nil {
 		panic(err)
 	}
-	resizePortfolio()
-	resizeProjects()
-
-	logIt("templates map prepared")
 }
 
 func resizePortfolio() {
@@ -156,7 +177,7 @@ func resizePortfolio() {
 		if err != nil {
 			log.Panicf("can't resize portfolio file %s  error: %v", origImg.Name(), err)
 		}
-		log.Printf("portfolio resize image ready-> %s", filepath.Join(thmbPath, origImg.Name()))
+		logItf("portfolio resize image ready-> %s", filepath.Join(thmbPath, origImg.Name()))
 	}
 }
 
@@ -167,32 +188,54 @@ func resizeProjects() {
 		log.Panicf("cant' read projects folder %s  error: %v", projectsPath, err)
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(projects))
+
 	for _, prj := range projects {
-		originPath := filepath.Join(projectsPath, prj.Name(), "originals")
-		thmbPath := filepath.Join(projectsPath, prj.Name(), "thumbnails")
+		go func(p string) {
+			resizeProject(p, projectsPath)
+			wg.Done()
+		}(prj.Name())
+	}
+	wg.Wait()
+	logIt("all projects resize completed")
+}
 
-		_, err = os.Stat(thmbPath)
-		if err != nil && os.IsNotExist(err) {
-			err = os.Mkdir(thmbPath, 0755)
-			if err != nil {
-				logItf("can't create thumbnails folder for project %s  error: %v", prj.Name(), err)
-			}
-		}
+func resizeProject(prjName string, projectsPath string) {
+	originPath := filepath.Join(projectsPath, prjName, "originals")
+	thmbPath := filepath.Join(projectsPath, prjName, "thumbnails")
 
-		origs, err := ioutil.ReadDir(originPath)
+	_, err := os.Stat(thmbPath)
+	if err != nil && os.IsNotExist(err) {
+		err = os.Mkdir(thmbPath, 0755)
 		if err != nil {
-			log.Panicf("can't read files from project originals %s,  error: %v", originPath, err)
-		}
-		for _, origImg := range origs {
-			err := files.Thumbnail(
-				filepath.Join(originPath, origImg.Name()),
-				filepath.Join(thmbPath, origImg.Name()))
-			if err != nil {
-				log.Panicf("can't resize projects file %s  error: %v", origImg.Name(), err)
-			}
-			log.Printf("resize project image ready-> %s", filepath.Join(thmbPath, origImg.Name()))
+			logItf("can't create thumbnails folder for project %s  error: %v", prjName, err)
 		}
 	}
+
+	origs, err := ioutil.ReadDir(originPath)
+	if err != nil {
+		log.Panicf("can't read files from project originals %s,  error: %v", originPath, err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(origs))
+	for _, origImg := range origs {
+		resizeImg(origImg.Name(), originPath, thmbPath)
+		wg.Done()
+	}
+	wg.Wait()
+	logItf("all image resize for project %s is completed", prjName)
+}
+
+func resizeImg(img, originPath, thPath string) {
+	err := files.Thumbnail(
+		filepath.Join(originPath, img),
+		filepath.Join(thPath, img))
+	if err != nil {
+		log.Panicf("can't resize projects file %s  error: %v", img, err)
+	}
+	logItf("resize project image ready-> %s", filepath.Join(thPath, img))
 }
 
 func buildProjectsTmpl() {
@@ -269,19 +312,28 @@ func generate() {
 		logItf("can't read tmplFiles in directory: %v \n", filesErr)
 	}
 
+	var wg sync.WaitGroup
 	for _, file := range tmplFiles {
-		pageBuf := bytes.NewBufferString("")
-		fromTemplate(pageBuf, file.Name())
+		wg.Add(1)
+		go func(f, t string) {
+			copyFile(f, t)
+			wg.Done()
+		}(file.Name(), targetFolder)
+	}
+	wg.Wait()
+	logIt("Completed.")
+}
 
-		fileErr := ioutil.WriteFile(filepath.Join(currentFolder, targetFolder, file.Name()), pageBuf.Bytes(), 0755)
-		if fileErr != nil {
-			logItf("can't create file: %v", fileErr)
-		}
+func copyFile(fileName, targetFolder string) {
+	pageBuf := bytes.NewBufferString("")
+	fromTemplate(pageBuf, fileName)
 
-		logItf("%v -> ready \n", file.Name())
+	fileErr := ioutil.WriteFile(filepath.Join(currentFolder, targetFolder, fileName), pageBuf.Bytes(), 0755)
+	if fileErr != nil {
+		logItf("can't create file: %v", fileErr)
 	}
 
-	logIt("Completed.")
+	logItf("%v -> ready \n", fileName)
 }
 
 func logItf(f string, v ...interface{}) {
