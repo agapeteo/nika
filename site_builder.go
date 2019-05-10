@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"nikastudio/files"
+	"nika/files"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,7 +17,7 @@ import (
 )
 
 var currentFolder string
-var version = "2019-04-30-A"
+var version = "2019-05-09-A"
 var isSilent bool
 
 var baseTmpl = new(baseTemplate)
@@ -170,6 +170,14 @@ func resizeProjects() {
 	for _, prj := range projects {
 		originPath := filepath.Join(projectsPath, prj.Name(), "originals")
 		thmbPath := filepath.Join(projectsPath, prj.Name(), "thumbnails")
+
+		_, err = os.Stat(thmbPath)
+		if err != nil && os.IsNotExist(err) {
+			err = os.Mkdir(thmbPath, 0755)
+			if err != nil {
+				logItf("can't create thumbnails folder for project %s  error: %v", prj.Name(), err)
+			}
+		}
 
 		origs, err := ioutil.ReadDir(originPath)
 		if err != nil {
