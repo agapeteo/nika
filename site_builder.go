@@ -18,7 +18,7 @@ import (
 )
 
 var currentFolder string
-var version = "2019-05-10-L"
+var version = "2019-05-11-A"
 var isSilent bool
 
 var baseTmpl = new(baseTemplate)
@@ -112,6 +112,13 @@ func prepareTemplates() {
 	go func() {
 		prepareLayouts()
 		buildProjectsTmpl()
+
+		var err error
+		baseTmpl.templates, err = files.ReadFiles(filepath.Join(currentFolder, "templates", "content"))
+		if err != nil {
+			panic(err)
+		}
+
 		wg.Done()
 	}()
 
@@ -155,11 +162,6 @@ func prepareLayouts() {
 		}
 		template.Must(baseTmpl.baseTemplate.Parse(layouts[l]))
 		logItf("layout %v parsed", l)
-	}
-
-	baseTmpl.templates, err = files.ReadFiles(filepath.Join(currentFolder, "templates", "content"))
-	if err != nil {
-		panic(err)
 	}
 }
 
