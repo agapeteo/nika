@@ -12,16 +12,20 @@ import (
 	"nika/files"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 )
 
 var currentFolder string
-var version = "2019-05-11-A"
-var isSilent bool
 
+const version = "2019-05-11-B"
+const digit = "[0-9]+"
+
+var isSilent bool
 var baseTmpl = new(baseTemplate)
+var digitPattern = regexp.MustCompile(digit)
 
 type baseTemplate struct {
 	baseTemplate *template.Template
@@ -105,6 +109,14 @@ func isProject(page string) bool {
 	return strings.HasPrefix(page, "projects")
 }
 
+func prune(str string) string {
+	var result string
+	result = strings.Replace(str, "-", " ", -1)
+	result = strings.Replace(result, "_", "", -1)
+	result = digitPattern.ReplaceAllString(result, "")
+	return result
+}
+
 func prepareTemplates() {
 	var wg sync.WaitGroup
 
@@ -154,6 +166,7 @@ func prepareLayouts() {
 			"truncProj":        truncProj,
 			"isGallery":        isGallery,
 			"isProject":        isProject,
+			"prune":            prune,
 		})
 
 	for l := range layouts {
