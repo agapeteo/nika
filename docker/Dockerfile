@@ -4,6 +4,6 @@ RUN apk update && \
     apk upgrade && \
     apk add --no-cache openssh git
 
-COPY scripts/generate-site.bash / /
+COPY scripts/generate-site.sh / /
 
-ENTRYPOINT ["/generate-site.bash"]
+ENTRYPOINT ["/generate-site.sh"]

@@ -6,9 +6,9 @@ folderName=`echo ${GIT_URL} | sed -n 's/.*\/\([^ ]*\).git/\1/p'`
 
 cd $folderName
 
-bin/linux/site_builder -generate -folder .
+bin/linux_x86_64/site_builder -generate -folder .
 
-echo 'test.nika.studio' > docs/CNAME
+cp ./static/CNAME > ./docs/CNAME
 
 git config --global user.email ${GIT_EMAIL}
 git config --global user.name ${GIT_NAME}
