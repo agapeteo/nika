@@ -64,6 +64,7 @@
         justify-content: center;
         align-items: center;
         padding-top: 20px;
+        padding-bottom: 50px;
     }
 
     .horizontal-menu {
@@ -146,6 +147,7 @@
         justify-content: center;
         align-items: center;
         padding-top: 20px;
+        padding-bottom: 50px;
     }
 
     .horizontal-menu {
@@ -196,6 +198,7 @@
         justify-content: center;
         align-items: center;
         padding-top: 20px;
+        padding-bottom: 50px;
     }
 
     .horizontal-menu {
@@ -276,7 +279,7 @@ a:active {
 }
 
 .navbar-static-top {
-    height: 10px;
+    height: 3px;
     width: 100%;
     position: fixed;
     top: 0px;
