@@ -20,7 +20,7 @@ import (
 
 var currentFolder string
 
-const version = "2019-05-11-B"
+const version = "2019-05-15-B"
 const digit = "[0-9]+"
 
 var isSilent bool
@@ -336,7 +336,24 @@ func generate() {
 		}(file.Name(), targetFolder)
 	}
 	wg.Wait()
+
+	copyCnameFile(targetFolder)
+
 	logIt("Completed.")
+}
+
+func copyCnameFile(targetFolder string) {
+	cFile := filepath.Join(currentFolder, "CNAME")
+	cBytes, err := ioutil.ReadFile(cFile)
+	if err != nil {
+		log.Panicf("can't read CNAME file at path %v  error: %v", cFile, err)
+	}
+
+	fileErr := ioutil.WriteFile(filepath.Join(currentFolder, targetFolder, "CNAME"), cBytes, 0755)
+	if fileErr != nil {
+		log.Panicf("can't create file: %v", fileErr)
+	}
+	logIt("CNAME file copied")
 }
 
 func copyFile(fileName, targetFolder string) {
