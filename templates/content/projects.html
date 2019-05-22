@@ -4,7 +4,8 @@
 <div class="projects-container">
 {{range projects}}
         <a href="projects-{{ . }}.html">
-            <img style="padding: 20px" width="240" src="/static/images/projects/{{ . }}/thumbnails/!cover.jpeg">
+            <img class="project-thumbnail" src="/static/images/projects/{{ . }}/thumbnails/!cover.jpeg">
+            <img class="project-mob-thumbnail" src="/static/images/projects/{{ . }}/originals/!cover.jpeg">
         </a>
 {{end}}
 </div>
